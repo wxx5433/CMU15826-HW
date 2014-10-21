@@ -1,5 +1,8 @@
 package CMU15826;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.Stack;
 
 /**
@@ -93,23 +96,33 @@ public class StringEditingDistance {
 	}
 
 	/**
-	 * Output the final result. 
+	 * Output the final result to file
 	 * @param distance edit distance between word1 and word2
 	 */
 	public void outputResult(int distance) {
-		System.out.println("Insertion Cost: " + this.insertion_cost);
-		System.out.println("Substitution Cost: " + this.substitution_cost);
-		System.out.println("Deletion Cost: " + this.deletion_cost);
-		System.out.println("String1: " + this.word1 + ", " + "String2: " + this.word2);
-		System.out.println("Matrix:");
-		for (int i = 0; i < dp.length; ++i) {
-			System.out.print(dp[i][0]);
-			for (int j = 1; j < dp[0].length; ++j) {
-				System.out.print("\t" + dp[i][j]);
-			}
-			System.out.println();
+		PrintWriter writer = null;
+		try {
+			writer = new PrintWriter("Ci_" + this.insertion_cost + 
+					"_Cs_" + this.substitution_cost + "_Cd_" + this.deletion_cost +
+					"_" + this.word1 + "_" + this.word2 + ".result", "UTF-8");
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
 		}
-		System.out.println("String Editing Distance: " + distance);
+		writer.write("Insertion Cost: " + this.insertion_cost + "\n");
+		writer.write("Substitution Cost: " + this.substitution_cost + "\n");
+		writer.write("Deletion Cost: " + this.deletion_cost + "\n");
+		writer.write("String1: " + this.word1 + ", " + "String2: " + this.word2 + "\n");
+		writer.write("Matrix:" + "\n");
+		for (int i = 0; i < dp.length; ++i) {
+			writer.write(dp[i][0]);
+			for (int j = 1; j < dp[0].length; ++j) {
+				writer.write("\t" + dp[i][j]);
+			}
+			writer.write("\n");
+		}
+		writer.write("String Editing Distance: " + distance);
 		outputPath();
 	}
 
