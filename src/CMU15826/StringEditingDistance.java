@@ -1,8 +1,9 @@
 package CMU15826;
 
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Stack;
 
 /**
@@ -62,7 +63,7 @@ public class StringEditingDistance {
 		}
 		return dp[word1.length()][word2.length()];
 	}
-	
+
 	/**
 	 * Update dp, and at the same time update backtrace to save the path info.
 	 * @param i row index of the grid to update
@@ -79,7 +80,7 @@ public class StringEditingDistance {
 		} else if (flag == 1 && s_cost < i_cost) {
 			flag = 2;
 		}
-		
+
 		if (flag == 0) {
 			dp[i + 1][j + 1] = d_cost;
 			backtrace[i + 1][j + 1][0] = i + 1;
@@ -100,68 +101,72 @@ public class StringEditingDistance {
 	 * @param distance edit distance between word1 and word2
 	 */
 	public void outputResult(int distance) {
-		PrintWriter writer = null;
+		BufferedWriter writer = null;
 		try {
-			writer = new PrintWriter("Ci_" + this.insertion_cost + 
+			writer = new BufferedWriter(new FileWriter("Ci_" + this.insertion_cost + 
 					"_Cs_" + this.substitution_cost + "_Cd_" + this.deletion_cost +
-					"_" + this.word1 + "_" + this.word2 + ".result", "UTF-8");
+					"_" + this.word1 + "_" + this.word2 + ".result"));
+			writer.write("Insertion Cost: " + this.insertion_cost + "\n");
+			writer.write("Substitution Cost: " + this.substitution_cost + "\n");
+			writer.write("Deletion Cost: " + this.deletion_cost + "\n");
+			writer.write("String1: " + this.word1 + ", " + "String2: " + this.word2 + "\n");
+			writer.write("Matrix:" + "\n");
+			for (int i = 0; i < dp.length; ++i) {
+				writer.write(dp[i][0]);
+				for (int j = 1; j < dp[0].length; ++j) {
+					writer.write("\t" + dp[i][j]);
+				}
+				writer.write("\n");
+			}
+			writer.write("String Editing Distance: " + distance);
+			outputPath(writer);
+			writer.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		writer.write("Insertion Cost: " + this.insertion_cost + "\n");
-		writer.write("Substitution Cost: " + this.substitution_cost + "\n");
-		writer.write("Deletion Cost: " + this.deletion_cost + "\n");
-		writer.write("String1: " + this.word1 + ", " + "String2: " + this.word2 + "\n");
-		writer.write("Matrix:" + "\n");
-		for (int i = 0; i < dp.length; ++i) {
-			writer.write(dp[i][0]);
-			for (int j = 1; j < dp[0].length; ++j) {
-				writer.write("\t" + dp[i][j]);
-			}
-			writer.write("\n");
-		}
-		writer.write("String Editing Distance: " + distance);
-		outputPath(writer);
-		writer.close();
 	}
 
 	/**
 	 * Output the path 
 	 */
-	private void outputPath(PrintWriter writer) {
-		writer.write("String editing path:\n");
-		Stack<String> stack = new Stack<String>();
-		int	i = word1.length(), j = word2.length();
-		while(true) {
-			if (i == 0 && j == 0) {
-				break;
-			}
-			int prev_i = backtrace[i][j][0];
-			int prev_j = backtrace[i][j][1];
-			if (dp[i][j] == dp[prev_i][prev_j]) {
-				stack.push("_");
-			} else if (i - prev_i == 1 && j - prev_j == 1) {  // substitution
-				stack.push("S(" + word1.charAt(i - 1) + ", " + word2.charAt(j - 1) + ")");
-			} else if (i - prev_i == 1 && j - prev_j == 0) {  // deletion
-				stack.push("D(" + word1.charAt(i - 1) + ")");
-			} else {  // insertion
-				stack.push("I(" + word2.charAt(j - 1) + ")");
-			}
-			i = prev_i;
-			j = prev_j;
-		} 
-		boolean formatFlag = false;
-		while (!stack.isEmpty()) {
-			if (formatFlag) {
-				writer.write(", ");
+	private void outputPath(BufferedWriter writer) {
+		try {
+			writer.write("String editing path:\n");
+			Stack<String> stack = new Stack<String>();
+			int	i = word1.length(), j = word2.length();
+			while(true) {
+				if (i == 0 && j == 0) {
+					break;
+				}
+				int prev_i = backtrace[i][j][0];
+				int prev_j = backtrace[i][j][1];
+				if (dp[i][j] == dp[prev_i][prev_j]) {
+					stack.push("_");
+				} else if (i - prev_i == 1 && j - prev_j == 1) {  // substitution
+					stack.push("S(" + word1.charAt(i - 1) + ", " + word2.charAt(j - 1) + ")");
+				} else if (i - prev_i == 1 && j - prev_j == 0) {  // deletion
+					stack.push("D(" + word1.charAt(i - 1) + ")");
+				} else {  // insertion
+					stack.push("I(" + word2.charAt(j - 1) + ")");
+				}
+				i = prev_i;
+				j = prev_j;
 			} 
-			formatFlag = true;
-			writer.write(stack.pop());
+			boolean formatFlag = false;
+			while (!stack.isEmpty()) {
+				if (formatFlag) {
+					writer.write(", ");
+				} 
+				formatFlag = true;
+				writer.write(stack.pop());
+			}
+			writer.write("\n");
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-		
-		writer.write("\n");
+
 	}
 
 	public void setInsertion_cost(int insertion_cost) {
