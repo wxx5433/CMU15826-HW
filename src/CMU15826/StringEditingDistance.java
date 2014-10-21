@@ -123,14 +123,15 @@ public class StringEditingDistance {
 			writer.write("\n");
 		}
 		writer.write("String Editing Distance: " + distance);
-		outputPath();
+		outputPath(writer);
+		writer.close();
 	}
 
 	/**
 	 * Output the path 
 	 */
-	private void outputPath() {
-		System.out.println("String editing path:");
+	private void outputPath(PrintWriter writer) {
+		writer.write("String editing path:\n");
 		Stack<String> stack = new Stack<String>();
 		int	i = word1.length(), j = word2.length();
 		while(true) {
@@ -154,13 +155,13 @@ public class StringEditingDistance {
 		boolean formatFlag = false;
 		while (!stack.isEmpty()) {
 			if (formatFlag) {
-				System.out.print(", ");
+				writer.write(", ");
 			} 
 			formatFlag = true;
-			System.out.print(stack.pop());
+			writer.write(stack.pop());
 		}
 		
-		System.out.println();
+		writer.write("\n");
 	}
 
 	public void setInsertion_cost(int insertion_cost) {
