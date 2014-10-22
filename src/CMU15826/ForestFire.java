@@ -4,10 +4,13 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * This program is for CMU 15-826 HW2.
@@ -52,10 +55,13 @@ public class ForestFire {
 
 	int sideLength;   /* side length of the forest */
 	Grid[][] forest;
+	boolean[][] visited;  /* flag to find clusters */
+	int burningTime;
 
 	public ForestFire(int sideLength) {
 		this.sideLength = sideLength;
 		forest = new Grid[sideLength][sideLength];
+		visited = new boolean[sideLength][sideLength];
 	}
 
 	/**
@@ -91,7 +97,7 @@ public class ForestFire {
 	 * The fire will propagate to its four neighbor.
 	 * The fire will stop until the fire cannot continue to propagate
 	 */
-	public int burn(){
+	public void burn(){
 		/* Randomly choose a tree to burn */
 		int start_i, start_j;
 		do {   /* find until the grid has tree */
@@ -100,32 +106,53 @@ public class ForestFire {
 			start_j = random.nextInt(sideLength);
 		} while (!this.forest[start_i][start_j].hasTree());
 		//System.out.println("lightening point: " + Integer.toString(start_i) + ", " + Integer.toString(start_j)) ;
+		propagate(start_i, start_j);
+	}
+	
+	private int propagate(int start_i, int start_j) {
 		/* Initialize the burning set and time */
 		Set<Grid> burningSet = new HashSet<Grid>();
-		Set<Grid> propagationSet = new HashSet<Grid>();
+		Set<Grid> propagationSet = null;
 		this.forest[start_i][start_j].setHasTree(false);
+		this.visited[start_i][start_j] = true;
 		burningSet.add(this.forest[start_i][start_j]);
-		int burningTime = 0;
+		burningTime = 0;
+		int size = 1;
 
 		/* keep propagating until nowhere to propagate */
 		do {
-			propagationSet.clear();  // reset the propagation set
+			propagationSet = new HashSet<Grid>();
 			++burningTime;
 			/* start to propagate */
 			for (Grid grid: burningSet) {  
 				for (Grid neighbor: getNeighbors(grid)) {
 					neighbor.setHasTree(false);  // burnt the tree
 					propagationSet.add(neighbor);
+					++size;
 				}
 			}
 			/* add the propagation set to the burning set */
-			burningSet.addAll(propagationSet);   
+			burningSet = propagationSet;   
 		} while (!propagationSet.isEmpty());
-		return burningTime;
+		return size;
 	}
 
 	public static void main(String[] args) {
 		ForestFire forestFire = new ForestFire(50);
+		/* args1: density args2: mode(print tree:0, find cluster: 1) */
+		if (args.length == 2) {  /* This is especially for question 3 */
+			forestFire.initializeForest(Double.parseDouble(args[0]));
+			int mode = Integer.parseInt(args[1]);
+			if (mode == 0) {
+				forestFire.printForest();
+			} else {  // mode 1: find clusters 
+				Map<Integer, Integer> map = forestFire.findClusters();
+				for (Map.Entry<Integer, Integer> entry: map.entrySet()) {
+					System.out.println(entry.getKey() + " " + entry.getValue());
+				}
+			}
+			return;
+		}
 		double[] densities = {0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5,
 				0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9}; 
 		int len = densities.length;
@@ -139,11 +166,11 @@ public class ForestFire {
 			/* run 5 times for each p */
 			for (int r = 0; r < 5; ++r) {
 				forestFire.initializeForest(p);
-				int burningTime = forestFire.burn();
-				if (burningTime > maxBurningTime[index]) {
-					maxBurningTime[index] = burningTime;
+				forestFire.burn();
+				if (forestFire.burningTime > maxBurningTime[index]) {
+					maxBurningTime[index] = forestFire.burningTime;
 				}
-				System.out.println("Burning Time: " + Integer.toString(burningTime));
+				System.out.println("Burning Time: " + forestFire.burningTime);
 			}
 		}
 		forestFire.writeMaxBurningTimeToFile(maxBurningTime);
@@ -161,24 +188,20 @@ public class ForestFire {
 
 	/**
 	 * Print the whole forest.
-	 * If a gird is occupied by a tree, print it as 1.
-	 * Print 0 otherwise
+	 * If a gird is occupied by a tree, print it as 0.
+	 * Print 1 otherwise
 	 */
 	private void printForest(){
-		System.out.println("Print the forest");
-		int count = 0;
 		for (int i = 0; i < sideLength; ++i) {
 			for (int j = 0; j < sideLength; ++j) {
 				if (this.forest[i][j].hasTree()) {
-					++count;
-					System.out.print("1\t");
+					System.out.print("1 ");
 				} else {
-					System.out.print("0\t");
+					System.out.print("0 ");
 				}
 			}
 			System.out.println();
 		}
-		System.out.println(count);
 	}
 
 	/**
@@ -209,6 +232,7 @@ public class ForestFire {
 			if (checkIndex(neighbor_i, neighbor_j)  
 					&& this.forest[neighbor_i][neighbor_j].hasTree()) {
 				neighbors.add(this.forest[neighbor_i][neighbor_j]);
+				this.visited[neighbor_i][neighbor_j] = true;
 			}
 		}
 		return neighbors;
@@ -224,7 +248,7 @@ public class ForestFire {
 				0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9}; 
 		PrintWriter writer = null;
 		try {
-			writer = new PrintWriter("Q5_2.dat", "UTF-8");
+			writer = new PrintWriter("Q5_2.dat", "US-ASCII");
 			for (int i = 1; i < densities.length; ++i) {
 				writer.write(Double.toString(densities[i]) + "\t" 
 						+ Integer.toString(maxBurningTime[i]) + "\n");
@@ -235,6 +259,26 @@ public class ForestFire {
 			e.printStackTrace();
 		}
 		writer.close();
+	}
+	
+	private Map<Integer, Integer> findClusters() {
+		Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+		for (int i = 0; i < this.sideLength; ++i) {
+			for (int j = 0; j < this.sideLength; ++j) {
+				if (visited[i][j] || !this.forest[i][j].hasTree()) {
+					visited[i][j] = true;
+					continue;
+				}
+				visited[i][j] = true;
+				int size = propagate(i, j);
+				if (map.containsKey(size)) {
+					map.put(size, map.get(size) + 1);
+				} else {
+					map.put(size, 1);
+				}
+			}
+		}
+		return new TreeMap<Integer, Integer>(map);
 	}
 
 }

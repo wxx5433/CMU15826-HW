@@ -28,15 +28,15 @@ public class NaiveCorrelationIntegral {
 
 	final static int RADIUS_NUM = 21;
 	double[] radius_list;
-	int[] l1_count;
-	int[] l2_count;
+	long[] l1_count;
+	long[] l2_count;
 	String inFileName;
 	List<Point> point_lists;
 
 	public NaiveCorrelationIntegral(String inFileName) {
 		radius_list = new double[RADIUS_NUM];
-		l1_count = new int[RADIUS_NUM];
-		l2_count = new int[RADIUS_NUM];
+		l1_count = new long[RADIUS_NUM];
+		l2_count = new long[RADIUS_NUM];
 		this.inFileName = inFileName;
 		this.point_lists = new ArrayList<Point>();
 	}
@@ -76,10 +76,9 @@ public class NaiveCorrelationIntegral {
 		int point_num = this.point_lists.size();
 		for (int index1 = 0; index1 < point_num; ++index1) {
 			Point p1 = this.point_lists.get(index1);
-			int index2 = index1 + 1;
-			Point p2 = null;
 			double l1_distance, l2_distance;
-			while (index2 < point_num) {
+			Point p2 = null;
+			for (int index2 = index1 + 1; index2 < point_num; ++index2) {
 				p2 = this.point_lists.get(index2);
 				l1_distance = computeL1Distance(p1, p2);
 				l2_distance = computeL2Distance(p1, p2);
@@ -88,15 +87,14 @@ public class NaiveCorrelationIntegral {
 					if (l1_distance > this.radius_list[i]) {
 						break;
 					}
-					++this.l1_count[i];
+					this.l1_count[i] += 2;
 				}
 				for (int i = NaiveCorrelationIntegral.RADIUS_NUM - 1; i >= 0; --i) {
 					if (l2_distance > this.radius_list[i]) {
 						break;
 					}
-					++this.l2_count[i];
+					this.l2_count[i] += 2;
 				}
-				++index2;
 			}
 		}
 	}
@@ -110,13 +108,10 @@ public class NaiveCorrelationIntegral {
 			pw1 = new PrintWriter("../output/" + inFileName + "_l1.result", "US-ASCII");
 			pw2 = new PrintWriter("../output/" + inFileName + "_l2.result", "US-ASCII");
 			for (int i = 0; i < NaiveCorrelationIntegral.RADIUS_NUM; ++i) {
-				/* add back the self-pairs and mirror-pairs */
-				pw1.write(Double.toString(this.radius_list[i]) + " " 
-						+ Integer.toString(this.l1_count[i] * 2 + point_num) + "\n");
-				pw2.write(Double.toString(this.radius_list[i]) + " " 
-						+ Integer.toString(this.l2_count[i] * 2 + point_num) + "\n");
+				/* add back the self-pairs */
+				pw1.write(this.radius_list[i] + " " + (this.l1_count[i] + point_num) + "\n");
+				pw2.write(this.radius_list[i] + " " + (this.l2_count[i] + point_num) + "\n");
 			}
-
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
@@ -139,9 +134,6 @@ public class NaiveCorrelationIntegral {
 		String inFileName = args[0].trim();
 		NaiveCorrelationIntegral ncl = new NaiveCorrelationIntegral(inFileName);
 		ncl.initialize();
-		//		for (int i = 0; i < RADIUS_NUM; ++i) {
-		//			System.out.println(ncl.radius_list[i]);
-		//		}
 		ncl.computeAllPariDistance();
 		ncl.writeToFile();
 	}

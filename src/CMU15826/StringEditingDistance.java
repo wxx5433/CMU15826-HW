@@ -65,8 +65,8 @@ public class StringEditingDistance {
 	 * @param j column index of the grid to update
 	 */
 	private void computeDistanceHelper(int i, int j) {
-		int d_cost = dp[i + 1][j] + deletion_cost; 
-		int i_cost = dp[i][j + 1] + insertion_cost;
+		int d_cost = dp[i + 1][j] + insertion_cost; 
+		int i_cost = dp[i][j + 1] + deletion_cost;
 		int s_cost = dp[i][j] + substitution_cost;
 		/* 0 represents deletion, 1 represents insertion, 2 represents substitution */
 		int flag = (d_cost < i_cost)? 0 : 1;
