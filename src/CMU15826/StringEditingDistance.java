@@ -26,12 +26,11 @@ public class StringEditingDistance {
 
 	/* Initialize dp and backtrace */
 	public void initialize() {
-		int min_cost = Math.min(deletion_cost, insertion_cost);
 		for (int i = 0; i <= word1.length(); ++i) {
-			dp[i][0] = i * min_cost;
+			dp[i][0] = i * deletion_cost;
 		}
 		for (int j = 0; j <= word2.length(); ++j) {
-			dp[0][j] = j * min_cost;
+			dp[0][j] = j * insertion_cost;
 		}
 		for (int i = 0; i <= word1.length(); ++i) {
 			for (int j = 0; j <= word2.length(); ++j) {
