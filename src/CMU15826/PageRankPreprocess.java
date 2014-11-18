@@ -29,7 +29,8 @@ public class PageRankPreprocess {
 				StringTokenizer tokenizer = new StringTokenizer(line);
 				String srcID = tokenizer.nextToken();
 				String dstID = tokenizer.nextToken();
-				updateMap(Integer.getInteger(srcID), Integer.getInteger(dstID));
+				updateMap(Integer.parseInt(srcID), Integer.parseInt(dstID));
+				
 			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
